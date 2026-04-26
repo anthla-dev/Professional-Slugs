@@ -80,7 +80,7 @@ def main():
     # 7. Define Training Arguments
     training_args = TrainingArguments(
         output_dir="/persistent/results",
-        evaluation_strategy="steps",
+        eval_strategy="steps",
         eval_steps=50,
         logging_strategy="steps",
         logging_steps=20,
