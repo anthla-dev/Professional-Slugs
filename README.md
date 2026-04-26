@@ -17,7 +17,6 @@ using Weights & Biases.
 ## Results
 - Trained on 450 samples (500 shuffled, 10% held out for eval)
 - Evaluated every 50 steps
-- Final model saved to /persistent/results/final_model
 
 ## Run it
 Set environment variables:
