@@ -1,0 +1,73 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: professional-slugs-train-job-scai-jam
+  namespace: scai-jam
+spec:
+  template:
+    spec:
+      containers:
+      - name: professional-slugs-train-container
+        image: huggingface/transformers-pytorch-gpu:latest
+        command: ["/bin/bash", "-c"]
+        args:
+          - |
+            # 1. Install dependencies
+            pip install "transformers>=4.36.0,<5.0.0" "peft>=0.9.0" "torch>=2.0.0" "datasets>=4.0.0" "accelerate>=0.20.0" "wandb>=0.15.0"
+
+            # 2. Clone your team's GitHub repository
+            # REPLACE the URL below with your actual repository URL
+            git clone https://github.com/anthla-dev/Professional-Slugs.git
+            cd Professional-Slugs
+
+            # 3. Run the training script!
+            echo "Starting training job..."
+            python3 train.py
+        env:
+        # Load HuggingFace and WandB tokens from secrets.yaml
+        - name: WANDB_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: team-secrets
+              key: WANDB_API_KEY
+        - name: WANDB_PROJECT
+          value: "scai-jam-2026"
+        - name: WANDB_NAME
+          value: "professional-slugs-run-1"
+        - name: HF_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: team-secrets
+              key: HF_TOKEN
+        volumeMounts:
+        - mountPath: /dev/shm
+          name: dshm
+        resources:
+          limits:
+            memory: 16Gi
+            cpu: "7"
+            nvidia.com/gpu: "1"
+            ephemeral-storage: 50Gi
+          requests:
+            memory: 16Gi
+            cpu: "6"
+            nvidia.com/gpu: "1"
+            ephemeral-storage: 50Gi
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nvidia.com/gpu.product
+                operator: In
+                values:
+                - NVIDIA-GeForce-RTX-3090
+                - NVIDIA-A10
+                - NVIDIA-TITAN-RTX
+                - NVIDIA-RTX-A5000
+      restartPolicy: Never
+  backoffLimit: 0
